@@ -122,13 +122,13 @@ def update_centroid(points, centroids):
 # Метод для вывода оптимального количества кластеров
 def optimal_clusters(points):
     criteria = [] * 15
-    for i in range(10):
+    for i in range(5):
         temp_points = points
         centroids = first_centroids(temp_points, i + 1)
         temp_points, centroids = k_means(temp_points, centroids, False)
         criteria.append(sum(dist(point, centroids[point.clusterID]) ** 2 for point in temp_points))
     plt.plot(criteria)
-    plt.xticks(np.arange(0, 9), np.arange(1, 10))
+    plt.xticks(np.arange(0, 5), np.arange(1, 6))
     plt.savefig("charts/optimal_cluster_chart")
     plt.clf()
     print(criteria)
@@ -139,7 +139,7 @@ def optimal_clusters(points):
     diff_r = diff[1:] / diff[:-1]
     print(diff_r)
     plt.plot(diff_r)
-    plt.xticks(np.arange(0, 8), np.arange(2, 10))
+    plt.xticks(np.arange(0, 3), np.arange(2, 5))
     plt.savefig("charts/scale_of_changes")
     min = 2 ** 16
     cluster = 0
@@ -150,8 +150,9 @@ def optimal_clusters(points):
     print(cluster)
     return cluster
 
+
 if __name__ == "__main__":
-    points = random_points(150)
+    points = random_points(100)
     plt.savefig("res/step_random_points")
     plt.clf()
     optimal_clusters(points)
