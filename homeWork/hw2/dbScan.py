@@ -1,3 +1,5 @@
+import sys
+
 import pygame
 import numpy as np
 import color
@@ -22,7 +24,7 @@ def init_screen():
     return screen
 
 
-def draw(screen):
+def draw(screen, eps, m):
     drawing = False
     clock = pygame.time.Clock()
     points = []
@@ -34,7 +36,7 @@ def draw(screen):
                 exit()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:  # Проверка, что нажата левая кнопка мыши
+                if event.button == 1:
                     drawing = True
             if event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
@@ -49,14 +51,14 @@ def draw(screen):
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_1:
-                    points = dbScan(points, 30, 4, screen)
+                    points = dbScan(points, eps, m, screen)
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_2:
                     paint_clusters(points)
 
         pygame.display.update()
-        clock.tick(10)
+        clock.tick(15)
 
 
 def dbScan(points, eps, m, screen):
@@ -68,9 +70,10 @@ def dbScan(points, eps, m, screen):
         NeighborPts = regionQuery(points, point, eps)
         if len(NeighborPts) == 0:
             point.name = "TRASH"
-        if len(NeighborPts) < m and len(NeighborPts) != 0:  # Если количество соседей меньше MinPts
+        elif len(NeighborPts) < m:  # Если количество соседей меньше MinPts
             point.name = "NOSE"  # шум
-        if len(NeighborPts) >= m and len(NeighborPts) != 0:
+            check_for_noises(points, point, eps)
+        else:
             clusters_point += 1
             point.name = "ROOT"
             point.claster_id = clusters_point
@@ -88,6 +91,8 @@ def expandCluster(points, NeighborPts, cluster, eps, m):
             if len(QNeighborPts) >= m:  # Если у Q достаточно соседей
                 point.name = "ROOT"
                 NeighborPts += QNeighborPts  # Объединить списки соседей
+            else:
+                point.name = "BORDER"
         if point.claster_id is None:
             point.claster_id = cluster
     for point in points:
@@ -102,28 +107,25 @@ def paint(points, m, eps):
     for point in points:
         if point.name == "ROOT":
             pygame.draw.circle(screen, color="green", center=(point.x, point.y), radius=3)
-            pygame.draw.circle(screen, color="black", center=(point.x, point.y), radius=30, width=1)
-        if point.name == "NOSE" and point.claster_id != 0:
+            # pygame.draw.circle(screen, color="black", center=(point.x, point.y), radius=30, width=1)
+        if point.name == "BORDER":
             pygame.draw.circle(screen, color="yellow", center=(point.x, point.y), radius=3)
-        if (point.name == "TRASH") or (point.name == "NOSE" and point.claster_id is None):
+            # pygame.draw.circle(screen, color="black", center=(point.x, point.y), radius=30, width=1)
+        if point.name == "TRASH":
             pygame.draw.circle(screen, color="red", center=(point.x, point.y), radius=3)
-        if point.name == "":
-            neighborhood = regionQuery(points, point, eps)
-            if len(neighborhood) >= m:
-                pygame.draw.circle(screen, color="green", center=(point.x, point.y), radius=3)
-            for n in neighborhood:
-                if n.name == "ROOT":
-                    point.claster_id = n.claster_id
-                    pygame.draw.circle(screen, color="yellow", center=(point.x, point.y), radius=3)
     for point in points:
         print(point.claster_id, point.name, point.flag, point.point_id)
     return points
 
 
 def paint_clusters(points):
+    screen.fill(color="#ffffff")
+    pygame.display.update()
     for point in points:
         if point.claster_id is not None:
             pygame.draw.circle(screen, color=color.colors[point.claster_id], center=(point.x, point.y), radius=3)
+        else:
+            pygame.draw.circle(screen, color="red", center=(point.x, point.y), radius=3)
 
 
 def regionQuery(points, pointA, eps):
@@ -137,6 +139,18 @@ def regionQuery(points, pointA, eps):
     return neighborhood
 
 
+def check_for_noises(points, nose_point, eps):
+    min_dist = sys.maxsize
+    NeighborPts = regionQuery(points, nose_point, eps)
+    for n in NeighborPts:
+        distance = dist(nose_point, n)
+        if n.name == "ROOT" and min_dist > distance:
+            nose_point.name = "BORDER"
+            min_dist = distance
+    if nose_point.name == "NOSE":
+        nose_point.name = "TRASH"
+
+
 def dist(pointA, pointB):
     x1, y1 = pointA.x, pointA.y
     x2, y2 = pointB.x, pointB.y
@@ -144,5 +158,8 @@ def dist(pointA, pointB):
 
 
 if __name__ == "__main__":
+    m = 4
+    eps = 30
+
     screen = init_screen()
-    draw(screen)
+    draw(screen, eps, m)
