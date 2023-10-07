@@ -6,7 +6,6 @@ import color
 
 
 class Point:
-
     def __init__(self, x, y, flag, name, claster_id, point_id):
         self.x = x
         self.y = y
@@ -72,19 +71,17 @@ def dbScan(points, eps, m, screen):
             point.name = "TRASH"
         elif len(NeighborPts) < m:  # Если количество соседей меньше MinPts
             point.name = "NOSE"  # шум
-            check_for_noises(points, point, eps)
         else:
             clusters_point += 1
             point.name = "ROOT"
             point.claster_id = clusters_point
             expandCluster(points, NeighborPts, clusters_point, eps, m)
-    points = paint(points, m, eps)
+    points = paint(points, eps)
     return points
 
 
 def expandCluster(points, NeighborPts, cluster, eps, m):
     for point in NeighborPts:
-
         if point.flag is False:
             point.flag = True
             QNeighborPts = regionQuery(points, point, eps)
@@ -101,33 +98,6 @@ def expandCluster(points, NeighborPts, cluster, eps, m):
                 point = neighbor
 
 
-def paint(points, m, eps):
-    screen.fill(color="#ffffff")
-    pygame.display.update()
-    for point in points:
-        if point.name == "ROOT":
-            pygame.draw.circle(screen, color="green", center=(point.x, point.y), radius=3)
-            # pygame.draw.circle(screen, color="black", center=(point.x, point.y), radius=30, width=1)
-        if point.name == "BORDER":
-            pygame.draw.circle(screen, color="yellow", center=(point.x, point.y), radius=3)
-            # pygame.draw.circle(screen, color="black", center=(point.x, point.y), radius=30, width=1)
-        if point.name == "TRASH":
-            pygame.draw.circle(screen, color="red", center=(point.x, point.y), radius=3)
-    for point in points:
-        print(point.claster_id, point.name, point.flag, point.point_id)
-    return points
-
-
-def paint_clusters(points):
-    screen.fill(color="#ffffff")
-    pygame.display.update()
-    for point in points:
-        if point.claster_id is not None:
-            pygame.draw.circle(screen, color=color.colors[point.claster_id], center=(point.x, point.y), radius=3)
-        else:
-            pygame.draw.circle(screen, color="red", center=(point.x, point.y), radius=3)
-
-
 def regionQuery(points, pointA, eps):
     neighborhood = []  # Создаем пустой список для хранения соседей
     for pointB in points:
@@ -139,16 +109,44 @@ def regionQuery(points, pointA, eps):
     return neighborhood
 
 
-def check_for_noises(points, nose_point, eps):
-    min_dist = sys.maxsize
-    NeighborPts = regionQuery(points, nose_point, eps)
-    for n in NeighborPts:
-        distance = dist(nose_point, n)
-        if n.name == "ROOT" and min_dist > distance:
-            nose_point.name = "BORDER"
-            min_dist = distance
-    if nose_point.name == "NOSE":
-        nose_point.name = "TRASH"
+def paint(points, eps):
+    screen.fill(color="#ffffff")
+    pygame.display.update()
+    check_for_noises(points, eps)
+    for point in points:
+        if point.name == "ROOT":
+            pygame.draw.circle(screen, color="green", center=(point.x, point.y), radius=3)
+            # pygame.draw.circle(screen, color="black", center=(point.x, point.y), radius=30, width=1)
+        if point.name == "BORDER":
+            pygame.draw.circle(screen, color="yellow", center=(point.x, point.y), radius=3)
+            pygame.draw.circle(screen, color="black", center=(point.x, point.y), radius=30, width=1)
+        if point.name == "TRASH":
+            pygame.draw.circle(screen, color="red", center=(point.x, point.y), radius=3)
+    return points
+
+
+def check_for_noises(points, eps):
+    for p in points:
+        if p.name == "NOSE":
+            min_dist = sys.maxsize
+            neighborhood = regionQuery(points, p, eps)
+            for n in neighborhood:
+                distance = dist(p, n)
+                if n.name == "ROOT" and min_dist > distance:
+                    p.name = "BORDER"
+                    min_dist = distance
+            if p.name == "NOSE":
+                p.name = "TRASH"
+
+
+def paint_clusters(points):
+    screen.fill(color="#ffffff")
+    pygame.display.update()
+    for point in points:
+        if point.claster_id is not None:
+            pygame.draw.circle(screen, color=color.colors[point.claster_id], center=(point.x, point.y), radius=3)
+        else:
+            pygame.draw.circle(screen, color="red", center=(point.x, point.y), radius=3)
 
 
 def dist(pointA, pointB):
