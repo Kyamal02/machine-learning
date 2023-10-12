@@ -49,8 +49,10 @@ def draw(screen, eps, m):
                     points.append(Point(x1, y1, False, "", None, count_point_id))
 
             if event.type == pygame.KEYDOWN:
+                # при нажатии на 1
                 if event.key == pygame.K_1:
                     points = dbScan(points, eps, m)
+                # при нажатии на 2
                 if event.key == pygame.K_2:
                     paint_clusters(points)
 
