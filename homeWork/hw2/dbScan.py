@@ -50,9 +50,7 @@ def draw(screen, eps, m):
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_1:
-                    points = dbScan(points, eps, m, screen)
-
-            if event.type == pygame.KEYDOWN:
+                    points = dbScan(points, eps, m)
                 if event.key == pygame.K_2:
                     paint_clusters(points)
 
@@ -60,7 +58,7 @@ def draw(screen, eps, m):
         clock.tick(15)
 
 
-def dbScan(points, eps, m, screen):
+def dbScan(points, eps, m):
     clusters_point = 0
     for point in points:
         if point.flag is True:
@@ -68,10 +66,8 @@ def dbScan(points, eps, m, screen):
         point.flag = True
         NeighborPts = regionQuery(points, point, eps)
         if len(NeighborPts) == 0:
-            point.name = "TRASH"
-        elif len(NeighborPts) < m:  # Если количество соседей меньше MinPts
-            point.name = "NOSE"  # шум
-        else:
+            point.name = "NOSE"
+        elif len(NeighborPts) >= m:
             clusters_point += 1
             point.name = "ROOT"
             point.claster_id = clusters_point
@@ -85,7 +81,7 @@ def expandCluster(points, NeighborPts, cluster, eps, m):
         if point.flag is False:
             point.flag = True
             QNeighborPts = regionQuery(points, point, eps)
-            if len(QNeighborPts) >= m:  # Если у Q достаточно соседей
+            if len(QNeighborPts) >= m:
                 point.name = "ROOT"
                 NeighborPts += QNeighborPts  # Объединить списки соседей
             else:
@@ -99,20 +95,19 @@ def expandCluster(points, NeighborPts, cluster, eps, m):
 
 
 def regionQuery(points, pointA, eps):
-    neighborhood = []  # Создаем пустой список для хранения соседей
+    neighborhood = []
     for pointB in points:
         if (pointA != pointB):
-            # Вычисляем расстояние между точкой P и текущей точкой point
             distance_to_point = dist(pointA, pointB)
             if distance_to_point <= eps:
-                neighborhood.append(pointB)  # Если расстояние меньше или равно eps, добавляем точку в окрестность
+                neighborhood.append(pointB)
     return neighborhood
 
 
 def paint(points, eps):
     screen.fill(color="#ffffff")
     pygame.display.update()
-    check_for_noises(points, eps)
+    noise_checking(points, eps)
     for point in points:
         if point.name == "ROOT":
             pygame.draw.circle(screen, color="green", center=(point.x, point.y), radius=3)
@@ -120,14 +115,15 @@ def paint(points, eps):
         if point.name == "BORDER":
             pygame.draw.circle(screen, color="yellow", center=(point.x, point.y), radius=3)
             pygame.draw.circle(screen, color="black", center=(point.x, point.y), radius=30, width=1)
-        if point.name == "TRASH":
+        if point.name == "NOSE":
             pygame.draw.circle(screen, color="red", center=(point.x, point.y), radius=3)
+            # pygame.draw.circle(screen, color="black", center=(point.x, point.y), radius=30, width=1)
     return points
 
 
-def check_for_noises(points, eps):
+def noise_checking(points, eps):
     for p in points:
-        if p.name == "NOSE":
+        if p.name == "":
             min_dist = sys.maxsize
             neighborhood = regionQuery(points, p, eps)
             for n in neighborhood:
@@ -135,8 +131,8 @@ def check_for_noises(points, eps):
                 if n.name == "ROOT" and min_dist > distance:
                     p.name = "BORDER"
                     min_dist = distance
-            if p.name == "NOSE":
-                p.name = "TRASH"
+            if p.name == "":
+                p.name = "NOSE"
 
 
 def paint_clusters(points):
