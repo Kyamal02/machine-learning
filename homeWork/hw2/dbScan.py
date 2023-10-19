@@ -132,6 +132,7 @@ def noise_checking(points, eps):
                 distance = dist(p, n)
                 if n.name == "ROOT" and min_dist > distance:
                     p.name = "BORDER"
+                    p.claster_id = n.claster_id
                     min_dist = distance
             if p.name == "":
                 p.name = "NOSE"
