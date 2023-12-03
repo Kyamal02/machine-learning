@@ -52,7 +52,6 @@ def min_graph(graph, edges_weight, pos, nodes_index):
     while len(min_nodes_tree) != len(graph.nodes.items()):
         min_v = sys.maxsize
         for key, value in edges_weight.items():
-
             element1 = key[0]
             element2 = key[1]
             # только одна вершина из key должна быть в множестве и она должна быть min
@@ -143,8 +142,8 @@ colors = random_colors = [
     range(255)]
 
 if __name__ == "__main__":
-    NUMBER_OF_NODES = 20
-    NUMBER_OF_CLUSTER = 5
+    NUMBER_OF_NODES = 10
+    NUMBER_OF_CLUSTER = 3
 
     graph, pos, edges_weight, nodes_index = init(NUMBER_OF_NODES)
 
